@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>勉強管理アプリ</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/umd/Recharts.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>勉強管理アプリ</title>
+  <!-- ① Babel は開発用。GitHub Pagesなら後ろに defer を入れる -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" defer></script>
+  <!-- ② React / ReactDOM は defer をつけて読み込む -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/umd/Recharts.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.min.js" defer></script>
+  <script src="https://cdn.tailwindcss.com" defer></script>
+  <style>
         body {
             margin: 0;
             padding: 0;
@@ -39,6 +41,8 @@
 </head>
 <body>
     <div id="root"></div>
+
+    <script type="text/babel" data-presets="react" defer>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
