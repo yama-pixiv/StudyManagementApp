@@ -4,12 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>勉強管理アプリ</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/umd/Recharts.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.js"></script>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX transformation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Recharts -->
+    <script src="https://unpkg.com/recharts@2.8.0/umd/Recharts.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
     <style>
         body {
             margin: 0;
@@ -35,15 +45,53 @@
                 overflow: hidden;
             }
         }
+
+        /* Loading indicator */
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+    </div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
-        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = Recharts;
-        const { Play, Pause, Plus, Clock, Calendar, Target, Bell, Settings, BarChart3, Trash2 } = lucide;
+        
+        // Lucide icons setup
+        const LucideIcon = ({ name, ...props }) => {
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, []);
+            
+            return React.createElement('i', {
+                'data-lucide': name,
+                ...props
+            });
+        };
 
         const StudyManagementApp = () => {
             // 初期科目設定
@@ -280,396 +328,418 @@
             const renderTabContent = () => {
                 switch(activeTab) {
                     case 'timer':
-                        return React.createElement('div', { className: 'space-y-6' }, [
-                            // 現在時刻表示
-                            React.createElement('div', { key: 'time', className: 'text-center bg-gray-50 p-4 rounded-lg' }, [
-                                React.createElement('div', { key: 'clock', className: 'flex items-center justify-center gap-2 text-gray-600' }, [
-                                    React.createElement(Clock, { key: 'icon', size: 20 }),
-                                    React.createElement('span', { key: 'time', className: 'text-2xl font-mono' }, 
-                                        currentTime.toLocaleTimeString('ja-JP')
-                                    )
-                                ]),
-                                React.createElement('div', { key: 'date', className: 'text-sm text-gray-500 mt-1' },
-                                    currentTime.toLocaleDateString('ja-JP', { 
-                                        year: 'numeric', 
-                                        month: 'long', 
-                                        day: 'numeric',
-                                        weekday: 'long'
-                                    })
-                                )
-                            ]),
+                        return (
+                            <div className="space-y-6">
+                                {/* 現在時刻表示 */}
+                                <div className="text-center bg-gray-50 p-4 rounded-lg">
+                                    <div className="flex items-center justify-center gap-2 text-gray-600">
+                                        <LucideIcon name="clock" className="w-5 h-5" />
+                                        <span className="text-2xl font-mono">
+                                            {currentTime.toLocaleTimeString('ja-JP')}
+                                        </span>
+                                    </div>
+                                    <div className="text-sm text-gray-500 mt-1">
+                                        {currentTime.toLocaleDateString('ja-JP', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric',
+                                            weekday: 'long'
+                                        })}
+                                    </div>
+                                </div>
 
-                            // 科目選択
-                            React.createElement('div', { key: 'subjects', className: 'space-y-3' }, [
-                                React.createElement('label', { key: 'label', className: 'block text-sm font-medium text-gray-700' }, '科目選択'),
-                                React.createElement('div', { key: 'grid', className: 'grid grid-cols-2 gap-2' },
-                                    subjects.map(subject => 
-                                        React.createElement('button', {
-                                            key: subject.id,
-                                            onClick: () => !isStudying && setSelectedSubject(subject),
-                                            disabled: isStudying,
-                                            className: `p-3 rounded-lg border-2 transition-all ${
-                                                selectedSubject.id === subject.id
-                                                    ? 'border-blue-500 bg-blue-50'
-                                                    : 'border-gray-200 hover:border-gray-300'
-                                            } ${isStudying ? 'opacity-50 cursor-not-allowed' : ''}`,
-                                            style: {
-                                                backgroundColor: selectedSubject.id === subject.id ? subject.color + '20' : 'white',
-                                                borderColor: selectedSubject.id === subject.id ? subject.color : undefined
-                                            }
-                                        }, 
-                                            React.createElement('div', { className: 'flex items-center gap-2' }, [
-                                                React.createElement('div', {
-                                                    key: 'color',
-                                                    className: 'w-4 h-4 rounded-full',
-                                                    style: { backgroundColor: subject.color }
-                                                }),
-                                                React.createElement('span', { key: 'name', className: 'text-sm font-medium' }, subject.name)
-                                            ])
-                                        )
-                                    )
-                                )
-                            ]),
+                                {/* 科目選択 */}
+                                <div className="space-y-3">
+                                    <label className="block text-sm font-medium text-gray-700">科目選択</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {subjects.map(subject => (
+                                            <button
+                                                key={subject.id}
+                                                onClick={() => !isStudying && setSelectedSubject(subject)}
+                                                disabled={isStudying}
+                                                className={`p-3 rounded-lg border-2 transition-all ${
+                                                    selectedSubject.id === subject.id
+                                                        ? 'border-blue-500 bg-blue-50'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                } ${isStudying ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                style={{
+                                                    backgroundColor: selectedSubject.id === subject.id ? subject.color + '20' : 'white',
+                                                    borderColor: selectedSubject.id === subject.id ? subject.color : undefined
+                                                }}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className="w-4 h-4 rounded-full"
+                                                        style={{ backgroundColor: subject.color }}
+                                                    ></div>
+                                                    <span className="text-sm font-medium">{subject.name}</span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
 
-                            // タイマー表示
-                            React.createElement('div', { key: 'timer', className: 'text-center space-y-4' }, [
-                                React.createElement('div', { key: 'time', className: 'text-6xl font-mono font-bold text-gray-800' },
-                                    formatDuration(studyTime)
-                                ),
-                                React.createElement('div', { key: 'subject', className: 'text-lg text-gray-600' },
-                                    `${selectedSubject.name}で勉強中`
-                                )
-                            ]),
+                                {/* タイマー表示 */}
+                                <div className="text-center space-y-4">
+                                    <div className="text-6xl font-mono font-bold text-gray-800">
+                                        {formatDuration(studyTime)}
+                                    </div>
+                                    <div className="text-lg text-gray-600">
+                                        {selectedSubject.name}で勉強中
+                                    </div>
+                                </div>
 
-                            // 開始/停止ボタン
-                            React.createElement('div', { key: 'button', className: 'flex justify-center' },
-                                !isStudying 
-                                    ? React.createElement('button', {
-                                        onClick: startStudy,
-                                        className: 'flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full text-lg font-medium transition-colors'
-                                    }, [
-                                        React.createElement(Play, { key: 'icon', size: 24 }),
-                                        '勉強開始'
-                                    ])
-                                    : React.createElement('button', {
-                                        onClick: stopStudy,
-                                        className: 'flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-8 py-4 rounded-full text-lg font-medium transition-colors'
-                                    }, [
-                                        React.createElement(Pause, { key: 'icon', size: 24 }),
-                                        '勉強終了'
-                                    ])
-                            ),
+                                {/* 開始/停止ボタン */}
+                                <div className="flex justify-center">
+                                    {!isStudying ? (
+                                        <button
+                                            onClick={startStudy}
+                                            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full text-lg font-medium transition-colors"
+                                        >
+                                            <LucideIcon name="play" className="w-6 h-6" />
+                                            勉強開始
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={stopStudy}
+                                            className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-8 py-4 rounded-full text-lg font-medium transition-colors"
+                                        >
+                                            <LucideIcon name="pause" className="w-6 h-6" />
+                                            勉強終了
+                                        </button>
+                                    )}
+                                </div>
 
-                            // 今日の学習時間
-                            React.createElement('div', { key: 'today', className: 'bg-blue-50 p-4 rounded-lg text-center' }, [
-                                React.createElement('div', { key: 'label', className: 'text-sm text-blue-600 mb-1' }, '今日の学習時間'),
-                                React.createElement('div', { key: 'time', className: 'text-2xl font-bold text-blue-800' },
-                                    formatDuration(getTodayStudyTime())
-                                )
-                            ])
-                        ]);
+                                {/* 今日の学習時間 */}
+                                <div className="bg-blue-50 p-4 rounded-lg text-center">
+                                    <div className="text-sm text-blue-600 mb-1">今日の学習時間</div>
+                                    <div className="text-2xl font-bold text-blue-800">
+                                        {formatDuration(getTodayStudyTime())}
+                                    </div>
+                                </div>
+                            </div>
+                        );
 
                     case 'history':
-                        return React.createElement('div', { className: 'space-y-6' }, [
-                            React.createElement('div', { key: 'header', className: 'flex justify-between items-center' }, [
-                                React.createElement('h2', { key: 'title', className: 'text-xl font-bold text-gray-800' }, '学習履歴'),
-                                React.createElement('select', {
-                                    key: 'select',
-                                    value: viewPeriod,
-                                    onChange: (e) => setViewPeriod(e.target.value),
-                                    className: 'px-3 py-2 border border-gray-300 rounded-lg'
-                                }, [
-                                    React.createElement('option', { key: 'daily', value: 'daily' }, '日別'),
-                                    React.createElement('option', { key: 'weekly', value: 'weekly' }, '週別'),
-                                    React.createElement('option', { key: 'monthly', value: 'monthly' }, '月別')
-                                ])
-                            ]),
+                        return (
+                            <div className="space-y-6">
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-xl font-bold text-gray-800">学習履歴</h2>
+                                    <select
+                                        value={viewPeriod}
+                                        onChange={(e) => setViewPeriod(e.target.value)}
+                                        className="px-3 py-2 border border-gray-300 rounded-lg"
+                                    >
+                                        <option value="daily">日別</option>
+                                        <option value="weekly">週別</option>
+                                        <option value="monthly">月別</option>
+                                    </select>
+                                </div>
 
-                            React.createElement('div', { key: 'chart', className: 'h-80' },
-                                React.createElement(ResponsiveContainer, { width: '100%', height: '100%' },
-                                    React.createElement(BarChart, { data: getStatistics() }, [
-                                        React.createElement(CartesianGrid, { key: 'grid', strokeDasharray: '3 3' }),
-                                        React.createElement(XAxis, { key: 'x', dataKey: 'name' }),
-                                        React.createElement(YAxis, { key: 'y' }),
-                                        React.createElement(Tooltip, { key: 'tooltip', formatter: (value) => [`${value.toFixed(0)}分`, ''] }),
-                                        React.createElement(Legend, { key: 'legend' }),
-                                        ...subjects.map(subject =>
-                                            React.createElement(Bar, {
-                                                key: subject.name,
-                                                dataKey: subject.name,
-                                                fill: subject.color,
-                                                name: subject.name
-                                            })
-                                        )
-                                    ])
-                                )
-                            ),
 
-                            // 最近の学習記録
-                            React.createElement('div', { key: 'recent', className: 'space-y-2' }, [
-                                React.createElement('h3', { key: 'title', className: 'text-lg font-medium text-gray-800' }, '最近の記録'),
-                                React.createElement('div', { key: 'list', className: 'space-y-2 max-h-60 overflow-y-auto' },
-                                    studyHistory.slice(-10).reverse().map(record => 
-                                        React.createElement('div', { key: record.id, className: 'flex items-center justify-between p-3 bg-gray-50 rounded-lg' }, [
-                                            React.createElement('div', { key: 'info', className: 'flex items-center gap-3' }, [
-                                                React.createElement('div', {
-                                                    key: 'color',
-                                                    className: 'w-4 h-4 rounded-full',
-                                                    style: { backgroundColor: record.color }
-                                                }),
-                                                React.createElement('span', { key: 'subject', className: 'font-medium' }, record.subject),
-                                                React.createElement('span', { key: 'date', className: 'text-sm text-gray-500' }, record.date)
-                                            ]),
-                                            React.createElement('div', { key: 'duration', className: 'text-sm' },
-                                                `${Math.floor(record.duration / 60)}分${record.duration % 60}秒`
-                                            )
-                                        ])
-                                    )
-                                )
-                            ])
-                        ]);
+                                {/* 最近の学習記録 */}
+                                <div className="space-y-2">
+                                    <h3 className="text-lg font-medium text-gray-800">最近の記録</h3>
+                                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                                        {studyHistory.length === 0 ? (
+                                            <div className="text-center text-gray-500 py-8">
+                                                まだ学習記録がありません<br/>
+                                                勉強を始めて記録を作成しましょう！
+                                            </div>
+                                        ) : (
+                                            studyHistory.slice(-10).reverse().map(record => (
+                                                <div key={record.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                    <div className="flex items-center gap-3">
+                                                        <div
+                                                            className="w-4 h-4 rounded-full"
+                                                            style={{ backgroundColor: record.color }}
+                                                        ></div>
+                                                        <span className="font-medium">{record.subject}</span>
+                                                        <span className="text-sm text-gray-500">{record.date}</span>
+                                                    </div>
+                                                    <div className="text-sm">
+                                                        {Math.floor(record.duration / 60)}分{record.duration % 60}秒
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        );
 
                     case 'goals':
-                        return React.createElement('div', { className: 'space-y-6' }, [
-                            React.createElement('h2', { key: 'title', className: 'text-xl font-bold text-gray-800' }, '目標設定'),
-                            
-                            React.createElement('div', { key: 'inputs', className: 'space-y-4' }, [
-                                React.createElement('div', { key: 'daily', className: 'space-y-2' }, [
-                                    React.createElement('label', { key: 'label', className: 'block text-sm font-medium text-gray-700' }, '日別目標時間（分）'),
-                                    React.createElement('input', {
-                                        key: 'input',
-                                        type: 'number',
-                                        value: goals.daily * 60,
-                                        onChange: (e) => setGoals(prev => ({...prev, daily: (parseInt(e.target.value) || 0) / 60})),
-                                        className: 'w-full px-3 py-2 border border-gray-300 rounded-lg',
-                                        min: '0',
-                                        max: '1440',
-                                        step: '30'
-                                    })
-                                ]),
-
-                                React.createElement('div', { key: 'weekly', className: 'space-y-2' }, [
-                                    React.createElement('label', { key: 'label', className: 'block text-sm font-medium text-gray-700' }, '週別目標時間（分）'),
-                                    React.createElement('input', {
-                                        key: 'input',
-                                        type: 'number',
-                                        value: goals.weekly * 60,
-                                        onChange: (e) => setGoals(prev => ({...prev, weekly: (parseInt(e.target.value) || 0) / 60})),
-                                        className: 'w-full px-3 py-2 border border-gray-300 rounded-lg',
-                                        min: '0',
-                                        max: '10080',
-                                        step: '30'
-                                    })
-                                ]),
-
-                                React.createElement('div', { key: 'monthly', className: 'space-y-2' }, [
-                                    React.createElement('label', { key: 'label', className: 'block text-sm font-medium text-gray-700' }, '月別目標時間（分）'),
-                                    React.createElement('input', {
-                                        key: 'input',
-                                        type: 'number',
-                                        value: goals.monthly * 60,
-                                        onChange: (e) => setGoals(prev => ({...prev, monthly: (parseInt(e.target.value) || 0) / 60})),
-                                        className: 'w-full px-3 py-2 border border-gray-300 rounded-lg',
-                                        min: '0',
-                                        max: '44640',
-                                        step: '30'
-                                    })
-                                ])
-                            ]),
-
-                            // 目標達成状況
-                            React.createElement('div', { key: 'progress', className: 'space-y-4' }, [
-                                React.createElement('h3', { key: 'title', className: 'text-lg font-medium text-gray-800' }, '達成状況'),
+                        return (
+                            <div className="space-y-6">
+                                <h2 className="text-xl font-bold text-gray-800">目標設定</h2>
                                 
-                                React.createElement('div', { key: 'today', className: 'space-y-3' },
-                                    React.createElement('div', { className: 'p-3 bg-gray-50 rounded-lg' }, [
-                                        React.createElement('div', { key: 'header', className: 'flex justify-between items-center mb-2' }, [
-                                            React.createElement('span', { key: 'label', className: 'text-sm font-medium' }, '今日の進捗'),
-                                            React.createElement('span', { key: 'time', className: 'text-sm text-gray-600' },
-                                                `${(getTodayStudyTime() / 60).toFixed(0)} / ${goals.daily * 60} 分`
-                                            )
-                                        ]),
-                                        React.createElement('div', { key: 'bar', className: 'w-full bg-gray-200 rounded-full h-2' },
-                                            React.createElement('div', {
-                                                className: 'bg-blue-500 h-2 rounded-full',
-                                                style: {
-                                                    width: `${Math.min(100, (getTodayStudyTime() / 60 / (goals.daily * 60)) * 100)}%`
-                                                }
-                                            })
-                                        )
-                                    ])
-                                )
-                            ])
-                        ]);
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            日別目標時間（分）
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={goals.daily * 60}
+                                            onChange={(e) => setGoals(prev => ({...prev, daily: (parseInt(e.target.value) || 0) / 60}))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                            min="0"
+                                            max="1440"
+                                            step="30"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            週別目標時間（分）
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={goals.weekly * 60}
+                                            onChange={(e) => setGoals(prev => ({...prev, weekly: (parseInt(e.target.value) || 0) / 60}))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                            min="0"
+                                            max="10080"
+                                            step="30"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            月別目標時間（分）
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={goals.monthly * 60}
+                                            onChange={(e) => setGoals(prev => ({...prev, monthly: (parseInt(e.target.value) || 0) / 60}))}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                            min="0"
+                                            max="44640"
+                                            step="30"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 目標達成状況 */}
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium text-gray-800">達成状況</h3>
+                                    
+                                    <div className="space-y-3">
+                                        <div className="p-3 bg-gray-50 rounded-lg">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-sm font-medium">今日の進捗</span>
+                                                <span className="text-sm text-gray-600">
+                                                    {(getTodayStudyTime() / 60).toFixed(0)} / {goals.daily * 60} 分
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div
+                                                    className="bg-blue-500 h-2 rounded-full"
+                                                    style={{
+                                                        width: `${Math.min(100, (getTodayStudyTime() / 60 / (goals.daily * 60)) * 100)}%`
+                                                    }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
 
                     case 'settings':
-                        return React.createElement('div', { className: 'space-y-6' }, [
-                            React.createElement('h2', { key: 'title', className: 'text-xl font-bold text-gray-800' }, '設定'),
-                            
-                            // 通知設定
-                            React.createElement('div', { key: 'notifications', className: 'space-y-4' }, [
-                                React.createElement('h3', { key: 'title', className: 'text-lg font-medium text-gray-800' }, '通知設定'),
+                        return (
+                            <div className="space-y-6">
+                                <h2 className="text-xl font-bold text-gray-800">設定</h2>
                                 
-                                React.createElement('div', { key: 'enable', className: 'flex items-center gap-3' }, [
-                                    React.createElement('input', {
-                                        key: 'checkbox',
-                                        type: 'checkbox',
-                                        checked: notifications.enabled,
-                                        onChange: (e) => setNotifications(prev => ({...prev, enabled: e.target.checked})),
-                                        className: 'w-4 h-4'
-                                    }),
-                                    React.createElement('label', { key: 'label', className: 'text-sm font-medium text-gray-700' },
-                                        '勉強リマインダーを有効にする'
-                                    )
-                                ]),
+                                {/* 通知設定 */}
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium text-gray-800">通知設定</h3>
+                                    
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={notifications.enabled}
+                                            onChange={(e) => setNotifications(prev => ({...prev, enabled: e.target.checked}))}
+                                            className="w-4 h-4"
+                                        />
+                                        <label className="text-sm font-medium text-gray-700">
+                                            勉強リマインダーを有効にする
+                                        </label>
+                                    </div>
 
-                                React.createElement('div', { key: 'time', className: 'space-y-2' }, [
-                                    React.createElement('label', { key: 'label', className: 'block text-sm font-medium text-gray-700' }, '通知時刻'),
-                                    React.createElement('input', {
-                                        key: 'input',
-                                        type: 'time',
-                                        value: notifications.time,
-                                        onChange: (e) => setNotifications(prev => ({...prev, time: e.target.value})),
-                                        className: 'px-3 py-2 border border-gray-300 rounded-lg'
-                                    })
-                                ])
-                            ]),
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            通知時刻
+                                        </label>
+                                        <input
+                                            type="time"
+                                            value={notifications.time}
+                                            onChange={(e) => setNotifications(prev => ({...prev, time: e.target.value}))}
+                                            className="px-3 py-2 border border-gray-300 rounded-lg"
+                                        />
+                                    </div>
+                                </div>
 
-                            // 科目管理
-                            React.createElement('div', { key: 'subjects', className: 'space-y-4' }, [
-                                React.createElement('h3', { key: 'title', className: 'text-lg font-medium text-gray-800' }, '科目管理'),
-                                
-                                React.createElement('div', { key: 'list', className: 'space-y-3' },
-                                    subjects.map(subject => 
-                                        React.createElement('div', { key: subject.id, className: 'flex items-center justify-between p-3 bg-gray-50 rounded-lg' }, [
-                                            React.createElement('div', { key: 'info', className: 'flex items-center gap-3' }, [
-                                                React.createElement('input', {
-                                                    key: 'color',
-                                                    type: 'color',
-                                                    value: subject.color,
-                                                    onChange: (e) => changeSubjectColor(subject.id, e.target.value),
-                                                    className: 'w-8 h-8 rounded border-none'
-                                                }),
-                                                React.createElement('span', { key: 'name', className: 'font-medium' }, subject.name)
-                                            ]),
-                                            subjects.length > 1 && React.createElement('button', {
-                                                key: 'delete',
-                                                onClick: () => deleteSubject(subject.id),
-                                                className: 'text-red-500 hover:text-red-700 p-1',
-                                                title: '科目を削除'
-                                            }, React.createElement(Trash2, { size: 16 }))
-                                        ])
-                                    )
-                                ),
+                                {/* 科目管理 */}
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium text-gray-800">科目管理</h3>
+                                    
+                                    <div className="space-y-3">
+                                        {subjects.map(subject => (
+                                            <div key={subject.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="color"
+                                                        value={subject.color}
+                                                        onChange={(e) => changeSubjectColor(subject.id, e.target.value)}
+                                                        className="w-8 h-8 rounded border-none"
+                                                    />
+                                                    <span className="font-medium">{subject.name}</span>
+                                                </div>
+                                                {subjects.length > 1 && (
+                                                    <button
+                                                        onClick={() => deleteSubject(subject.id)}
+                                                        className="text-red-500 hover:text-red-700 p-1"
+                                                        title="科目を削除"
+                                                    >
+                                                        <LucideIcon name="trash-2" className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
 
-                                !showAddSubject 
-                                    ? React.createElement('button', {
-                                        key: 'add-btn',
-                                        onClick: () => setShowAddSubject(true),
-                                        className: 'flex items-center gap-2 text-blue-600 hover:text-blue-700'
-                                    }, [
-                                        React.createElement(Plus, { key: 'icon', size: 16 }),
-                                        '科目を追加'
-                                    ])
-                                    : React.createElement('div', { key: 'add-form', className: 'flex gap-2' }, [
-                                        React.createElement('input', {
-                                            key: 'input',
-                                            type: 'text',
-                                            value: newSubjectName,
-                                            onChange: (e) => setNewSubjectName(e.target.value),
-                                            placeholder: '科目名を入力',
-                                            className: 'flex-1 px-3 py-2 border border-gray-300 rounded-lg'
-                                        }),
-                                        React.createElement('button', {
-                                            key: 'add',
-                                            onClick: addSubject,
-                                            className: 'px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600'
-                                        }, '追加'),
-                                        React.createElement('button', {
-                                            key: 'cancel',
-                                            onClick: () => {
-                                                setShowAddSubject(false);
-                                                setNewSubjectName('');
-                                            },
-                                            className: 'px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400'
-                                        }, 'キャンセル')
-                                    ])
-                            ])
-                        ]);
+                                    {!showAddSubject ? (
+                                        <button
+                                            onClick={() => setShowAddSubject(true)}
+                                            className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                                        >
+                                            <LucideIcon name="plus" className="w-4 h-4" />
+                                            科目を追加
+                                        </button>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={newSubjectName}
+                                                onChange={(e) => setNewSubjectName(e.target.value)}
+                                                placeholder="科目名を入力"
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
+                                            />
+                                            <button
+                                                onClick={addSubject}
+                                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                            >
+                                                追加
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setShowAddSubject(false);
+                                                    setNewSubjectName('');
+                                                }}
+                                                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                                            >
+                                                キャンセル
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
 
                     default:
                         return null;
                 }
             };
 
-            return React.createElement('div', { className: 'app-container' }, [
-                // ヘッダー
-                React.createElement('div', { key: 'header', className: 'bg-blue-600 text-white p-4' },
-                    React.createElement('h1', { className: 'text-xl font-bold text-center' }, '勉強管理アプリ')
-                ),
+            return (
+                <div className="app-container">
+                    {/* ヘッダー */}
+                    <div className="bg-blue-600 text-white p-4">
+                        <h1 className="text-xl font-bold text-center">勉強管理アプリ</h1>
+                    </div>
 
-                // メインコンテンツ
-                React.createElement('div', { key: 'content', className: 'p-4' },
-                    renderTabContent()
-                ),
+                    {/* メインコンテンツ */}
+                    <div className="p-4">
+                        {renderTabContent()}
+                    </div>
 
-                // ボトムナビゲーション
-                React.createElement('div', { key: 'nav', className: 'fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200' },
-                    React.createElement('div', { className: 'flex' }, [
-                        React.createElement('button', {
-                            key: 'timer',
-                            onClick: () => setActiveTab('timer'),
-                            className: `flex-1 p-4 text-center ${
-                                activeTab === 'timer' ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
-                            }`
-                        }, [
-                            React.createElement(Play, { key: 'icon', size: 20, className: 'mx-auto mb-1' }),
-                            React.createElement('div', { key: 'text', className: 'text-xs' }, 'タイマー')
-                        ]),
-                        
-                        React.createElement('button', {
-                            key: 'history',
-                            onClick: () => setActiveTab('history'),
-                            className: `flex-1 p-4 text-center ${
-                                activeTab === 'history' ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
-                            }`
-                        }, [
-                            React.createElement(BarChart3, { key: 'icon', size: 20, className: 'mx-auto mb-1' }),
-                            React.createElement('div', { key: 'text', className: 'text-xs' }, '履歴')
-                        ]),
-                        
-                        React.createElement('button', {
-                            key: 'goals',
-                            onClick: () => setActiveTab('goals'),
-                            className: `flex-1 p-4 text-center ${
-                                activeTab === 'goals' ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
-                            }`
-                        }, [
-                            React.createElement(Target, { key: 'icon', size: 20, className: 'mx-auto mb-1' }),
-                            React.createElement('div', { key: 'text', className: 'text-xs' }, '目標')
-                        ]),
-                        
-                        React.createElement('button', {
-                            key: 'settings',
-                            onClick: () => setActiveTab('settings'),
-                            className: `flex-1 p-4 text-center ${
-                                activeTab === 'settings' ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
-                            }`
-                        }, [
-                            React.createElement(Settings, { key: 'icon', size: 20, className: 'mx-auto mb-1' }),
-                            React.createElement('div', { key: 'text', className: 'text-xs' }, '設定')
-                        ])
-                    ])
-                ),
-                
-                // ボトムナビゲーション分のスペース
-                React.createElement('div', { key: 'spacer', className: 'h-20' })
-            ]);
+                    {/* ボトムナビゲーション */}
+                    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200">
+                        <div className="flex">
+                            <button
+                                onClick={() => setActiveTab('timer')}
+                                className={`flex-1 p-4 text-center ${
+                                    activeTab === 'timer' ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
+                                }`}
+                            >
+                                <LucideIcon name="play" className="w-5 h-5 mx-auto mb-1" />
+                                <div className="text-xs">タイマー</div>
+                            </button>
+                            
+                            <button
+                                onClick={() => setActiveTab('history')}
+                                className={`flex-1 p-4 text-center ${
+                                    activeTab === 'history' ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
+                                }`}
+                            >
+                                <LucideIcon name="bar-chart-3" className="w-5 h-5 mx-auto mb-1" />
+                                <div className="text-xs">履歴</div>
+                            </button>
+                            
+                            <button
+                                onClick={() => setActiveTab('goals')}
+                                className={`flex-1 p-4 text-center ${
+                                    activeTab === 'goals' ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
+                                }`}
+                            >
+                                <LucideIcon name="target" className="w-5 h-5 mx-auto mb-1" />
+                                <div className="text-xs">目標</div>
+                            </button>
+                            
+                            <button
+                                onClick={() => setActiveTab('settings')}
+                                className={`flex-1 p-4 text-center ${
+                                    activeTab === 'settings' ? 'text-blue-600 bg-blue-50' : 'text-gray-600'
+                                }`}
+                            >
+                                <LucideIcon name="settings" className="w-5 h-5 mx-auto mb-1" />
+                                <div className="text-xs">設定</div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {/* ボトムナビゲーション分のスペース */}
+                    <div className="h-20"></div>
+                </div>
+            );
         };
 
-        // アプリをレンダリング
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(React.createElement(StudyManagementApp));
+        // 初期化とレンダリング
+        const initApp = () => {
+            try {
+                console.log('アプリを初期化中...');
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                root.render(React.createElement(StudyManagementApp));
+                console.log('アプリが正常に初期化されました');
+            } catch (error) {
+                console.error('アプリの初期化に失敗しました:', error);
+                document.getElementById('root').innerHTML = `
+                    <div style="padding: 20px; text-align: center;">
+                        <h2>アプリの読み込みに失敗しました</h2>
+                        <p>ページを再読み込みしてください</p>
+                        <button onclick="location.reload()" style="padding: 10px 20px; margin-top: 10px;">再読み込み</button>
+                    </div>
+                `;
+            }
+        };
+
+        // DOMContentLoadedイベントでアプリを初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
     </script>
 </body>
 </html>
