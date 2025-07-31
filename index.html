@@ -1,97 +1,40 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>勉強管理アプリ</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React CDN -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
-    <!-- Babel for JSX transformation -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Recharts -->
-    <script src="https://unpkg.com/recharts@2.8.0/umd/Recharts.js"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        
-        .app-container {
-            max-width: 448px;
-            margin: 0 auto;
-            min-height: 100vh;
-            background-color: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-        
-        @media (min-width: 768px) {
-            .app-container {
-                margin-top: 2rem;
-                min-height: calc(100vh - 4rem);
-                border-radius: 1rem;
-                overflow: hidden;
-            }
-        }
-
-        /* Loading indicator */
-        .loading-spinner {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Management App</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel (JSXを実行) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Recharts -->
+  <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
 </head>
-<body>
-    <div id="root">
-        <div class="loading-spinner">
-            <div class="spinner"></div>
-        </div>
-    </div>
+<body class="bg-gray-100 text-gray-900">
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-        
-        // Lucide icons setup
-        const LucideIcon = ({ name, ...props }) => {
-            useEffect(() => {
-                if (window.lucide) {
-                    window.lucide.createIcons();
-                }
-            }, []);
-            
-            return React.createElement('i', {
-                'data-lucide': name,
-                ...props
-            });
-        };
+  <div id="root"></div>
+
+  <!-- アプリ本体 -->
+  <script type="text/babel">
+
+    const { useState, useEffect, useRef } = React;
+    const { Play, Pause, Plus, Clock, Calendar, Target, Bell, Settings, BarChart3, Trash2 } = lucide;
+    const {
+      ResponsiveContainer,
+      BarChart,
+      Bar,
+      XAxis,
+      YAxis,
+      CartesianGrid,
+      Tooltip,
+      Legend
+    } = Recharts;
 
         const StudyManagementApp = () => {
             // 初期科目設定
@@ -741,12 +684,7 @@
             }
         };
 
-        // DOMContentLoadedイベントでアプリを初期化
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
-        }
-    </script>
+       ReactDOM.createRoot(document.getElementById('root')).render(<StudyManagementApp />);
+  </script>
 </body>
 </html>
