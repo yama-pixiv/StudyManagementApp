@@ -16,6 +16,7 @@
     
     <!-- Recharts -->
     <script src="https://unpkg.com/recharts@2.8.0/umd/Recharts.js"></script>
+    <script src="https://unpkg.com/recharts@2.8.0/umd/index.js"></script>
     
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
@@ -78,6 +79,9 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
+        
+        // Recharts components
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } = window.Recharts || {};
         
         // Lucide icons setup
         const LucideIcon = ({ name, ...props }) => {
@@ -436,15 +440,76 @@
                                     </select>
                                 </div>
 
-                                {/* 簡易グラフ表示 */}
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <div className="text-center text-gray-600">
-                                        グラフ機能は準備中です<br/>
-                                        学習データは以下の履歴で確認できます
+                                {/* グラフ表示 */}
+                                <div className="h-80 bg-white p-2 rounded-lg border">
+                                    {window.Recharts && studyHistory.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={getStatistics()} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis 
+                                                    dataKey="name" 
+                                                    fontSize={12}
+                                                    interval={0}
+                                                    angle={-45}
+                                                    textAnchor="end"
+                                                    height={60}
+                                                />
+                                                <YAxis 
+                                                    fontSize={12}
+                                                    label={{ value: '分', angle: -90, position: 'insideLeft' }}
+                                                />
+                                                <Tooltip 
+                                                    formatter={(value, name) => [`${Math.round(value)}分`, name]}
+                                                    labelStyle={{ color: '#374151' }}
+                                                    contentStyle={{ 
+                                                        backgroundColor: '#f9fafb', 
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '8px'
+                                                    }}
+                                                />
+                                                <Legend 
+                                                    wrapperStyle={{ fontSize: '12px' }}
+                                                />
+                                                {subjects.map(subject => (
+                                                    <Bar
+                                                        key={subject.name}
+                                                        dataKey={subject.name}
+                                                        fill={subject.color}
+                                                        name={subject.name}
+                                                        radius={[2, 2, 0, 0]}
+                                                    />
+                                                ))}
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    ) : studyHistory.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                                            <LucideIcon name="bar-chart-3" className="w-16 h-16 mb-4 text-gray-300" />
+                                            <div className="text-center">
+                                                <p className="text-lg font-medium mb-2">学習データがありません</p>
+                                                <p className="text-sm">勉強を始めてデータを記録しましょう！</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                                            <LucideIcon name="loader" className="w-8 h-8 mb-2 animate-spin" />
+                                            <p>グラフを読み込み中...</p>
+                                        </div>
+                                    )}
+                                {/* 統計サマリー */}
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="bg-blue-50 p-3 rounded-lg text-center">
+                                        <div className="text-sm text-blue-600 mb-1">総学習時間</div>
+                                        <div className="text-lg font-bold text-blue-800">
+                                            {Math.floor(studyHistory.reduce((sum, h) => sum + h.duration, 0) / 60)}分
+                                        </div>
+                                    </div>
+                                    <div className="bg-green-50 p-3 rounded-lg text-center">
+                                        <div className="text-sm text-green-600 mb-1">学習回数</div>
+                                        <div className="text-lg font-bold text-green-800">
+                                            {studyHistory.length}回
+                                        </div>
                                     </div>
                                 </div>
-
-                                {/* 最近の学習記録 */}
                                 <div className="space-y-2">
                                     <h3 className="text-lg font-medium text-gray-800">最近の記録</h3>
                                     <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -726,6 +791,8 @@
         const initApp = () => {
             try {
                 console.log('アプリを初期化中...');
+                console.log('Recharts available:', !!window.Recharts);
+                
                 const root = ReactDOM.createRoot(document.getElementById('root'));
                 root.render(React.createElement(StudyManagementApp));
                 console.log('アプリが正常に初期化されました');
@@ -735,6 +802,7 @@
                     <div style="padding: 20px; text-align: center;">
                         <h2>アプリの読み込みに失敗しました</h2>
                         <p>ページを再読み込みしてください</p>
+                        <p style="font-size: 12px; color: #666;">エラー: ${error.message}</p>
                         <button onclick="location.reload()" style="padding: 10px 20px; margin-top: 10px;">再読み込み</button>
                     </div>
                 `;
