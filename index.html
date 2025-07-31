@@ -4,118 +4,156 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>勉強管理アプリ</title>
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Chart.js for statistics -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Lucide icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
-  <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      background-color: #f9fafb;
-    }
-  </style>
 </head>
-<body>
-  <div id="app" class="max-w-md mx-auto bg-white min-h-screen"></div>
+<body class="bg-gray-50 min-h-screen text-gray-800">
+  <header class="bg-blue-600 text-white text-center py-4 text-xl font-bold">勉強管理アプリ</header>
+
+  <main class="p-4 max-w-xl mx-auto">
+    <!-- 現在時刻表示 -->
+    <div class="text-center my-4">
+      <p id="current-time" class="text-lg font-semibold"></p>
+      <p id="current-date" class="text-sm text-gray-600"></p>
+    </div>
+
+    <!-- 科目選択 -->
+    <div class="mb-4">
+      <p class="font-semibold mb-2">科目選択</p>
+      <div id="subject-buttons" class="grid grid-cols-3 gap-2"></div>
+      <input id="new-subject" class="mt-2 p-2 border w-full rounded" placeholder="新しい科目を追加"/>
+      <button onclick="addSubject()" class="mt-1 px-3 py-1 bg-green-500 text-white rounded">追加</button>
+    </div>
+
+    <!-- タイマー -->
+    <div class="text-center my-4">
+      <h1 id="timer-display" class="text-4xl font-mono">00:00:00</h1>
+      <p id="status-display" class="text-sm mt-1">未選択</p>
+    </div>
+
+    <!-- スタート/ストップボタン -->
+    <div class="flex justify-center space-x-4">
+      <button id="start-btn" onclick="startStudy()" class="bg-green-500 text-white px-4 py-2 rounded">勉強開始</button>
+      <button id="stop-btn" onclick="stopStudy()" class="bg-red-500 text-white px-4 py-2 rounded">終了</button>
+    </div>
+
+    <!-- 今日の合計時間 -->
+    <div class="text-center mt-4">
+      <p class="text-sm">今日の学習時間</p>
+      <p id="today-total" class="text-xl font-bold">00:00:00</p>
+    </div>
+
+    <!-- 棒グラフ -->
+    <div class="my-6">
+      <h2 class="font-bold mb-2">学習履歴</h2>
+      <canvas id="studyChart" class="bg-white p-2 rounded shadow"></canvas>
+    </div>
+  </main>
 
   <script>
-    // JavaScript for managing state and rendering the study management app
-    // ReactのuseState/useEffectをVanilla JSで模倣します
-    // ここでは最初にタイマーだけ簡易再構成し、必要に応じて履歴や設定タブ等を段階的に追加できます
-
-    // 初期データ
-    const defaultSubjects = [
-      { id: 1, name: '国語', color: '#ef4444' },
-      { id: 2, name: '数学', color: '#3b82f6' },
-      { id: 3, name: '理科', color: '#10b981' },
-      { id: 4, name: '社会', color: '#f59e0b' },
-      { id: 5, name: '英語', color: '#8b5cf6' }
-    ];
-
-    let selectedSubject = defaultSubjects[0];
-    let isStudying = false;
-    let studyTime = 0;
+    const subjects = {
+      '国語': 'red',
+      '数学': 'blue',
+      '理科': 'green',
+      '社会': 'orange',
+      '英語': 'purple'
+    };
+    let selectedSubject = null;
     let startTime = null;
+    let totalTime = 0;
     let timerInterval = null;
 
-    function formatDuration(seconds) {
-      const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
-      const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-      const s = String(seconds % 60).padStart(2, '0');
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleTimeString('ja-JP');
+      document.getElementById('current-date').textContent = now.toLocaleDateString('ja-JP', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function addSubjectButtons() {
+      const container = document.getElementById('subject-buttons');
+      container.innerHTML = '';
+      Object.keys(subjects).forEach(subj => {
+        const btn = document.createElement('button');
+        btn.textContent = subj;
+        btn.className = `px-3 py-2 rounded border border-gray-300 bg-white hover:bg-${subjects[subj]}-100 text-${subjects[subj]}-700`;
+        btn.onclick = () => {
+          selectedSubject = subj;
+          document.getElementById('status-display').textContent = `${subj}で勉強中`;
+        }
+        container.appendChild(btn);
+      });
+    }
+    addSubjectButtons();
+
+    function addSubject() {
+      const name = document.getElementById('new-subject').value.trim();
+      if (name && !subjects[name]) {
+        subjects[name] = 'gray';
+        addSubjectButtons();
+        document.getElementById('new-subject').value = '';
+      }
+    }
+
+    function startStudy() {
+      if (!selectedSubject) {
+        alert('科目を選択してください。');
+        return;
+      }
+      startTime = new Date();
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function stopStudy() {
+      if (startTime && timerInterval) {
+        const endTime = new Date();
+        const duration = Math.floor((endTime - startTime) / 1000);
+        totalTime += duration;
+        updateTodayTotal();
+        clearInterval(timerInterval);
+        startTime = null;
+      }
+    }
+
+    function updateTimer() {
+      const now = new Date();
+      const seconds = Math.floor((now - startTime) / 1000);
+      document.getElementById('timer-display').textContent = formatTime(seconds);
+    }
+
+    function updateTodayTotal() {
+      document.getElementById('today-total').textContent = formatTime(totalTime);
+    }
+
+    function formatTime(sec) {
+      const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+      const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
       return `${h}:${m}:${s}`;
     }
 
-    function renderTimer() {
-      const container = document.getElementById('app');
-      container.innerHTML = '';
-
-      const now = new Date();
-
-      const clockHTML = `
-        <div class="bg-blue-600 text-white p-4">
-          <h1 class="text-xl font-bold text-center">勉強管理アプリ</h1>
-        </div>
-        <div class="p-4 space-y-6">
-          <div class="text-center bg-gray-50 p-4 rounded-lg">
-            <div class="flex items-center justify-center gap-2 text-gray-600">
-              <span class="text-2xl font-mono" id="current-time">${now.toLocaleTimeString('ja-JP')}</span>
-            </div>
-            <div class="text-sm text-gray-500 mt-1">
-              ${now.toLocaleDateString('ja-JP', {year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'})}
-            </div>
-          </div>
-
-          <div class="text-center">
-            <div class="text-6xl font-mono font-bold text-gray-800" id="study-duration">
-              ${formatDuration(studyTime)}
-            </div>
-            <div class="text-lg text-gray-600">${selectedSubject.name}で勉強中</div>
-          </div>
-
-          <div class="flex justify-center">
-            <button id="toggle-study" class="px-8 py-4 rounded-full text-white text-lg font-medium transition-colors ${isStudying ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}">
-              ${isStudying ? '勉強終了' : '勉強開始'}
-            </button>
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = clockHTML;
-      document.getElementById('toggle-study').addEventListener('click', toggleStudy);
-    }
-
-    function toggleStudy() {
-      if (isStudying) {
-        clearInterval(timerInterval);
-        isStudying = false;
-      } else {
-        isStudying = true;
-        startTime = new Date();
-        timerInterval = setInterval(() => {
-          studyTime++;
-          document.getElementById('study-duration').textContent = formatDuration(studyTime);
-        }, 1000);
+    // 仮のグラフデータ
+    const chart = new Chart(document.getElementById('studyChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['月', '火', '水', '木', '金', '土', '日'],
+        datasets: [{
+          label: '勉強時間（分）',
+          data: [30, 45, 50, 20, 60, 10, 0],
+          backgroundColor: 'rgba(59, 130, 246, 0.6)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
       }
-      renderTimer();
-    }
-
-    function updateClock() {
-      const el = document.getElementById('current-time');
-      if (el) el.textContent = new Date().toLocaleTimeString('ja-JP');
-    }
-
-    renderTimer();
-    setInterval(updateClock, 1000);
-
-    // Lucideの初期化
-    lucide.createIcons();
+    });
   </script>
 </body>
 </html>
