@@ -684,6 +684,13 @@
             }
         };
 
+    // DOMContentLoadedイベントでアプリを初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+
        ReactDOM.createRoot(document.getElementById('root')).render(<StudyManagementApp />);
   </script>
 </body>
